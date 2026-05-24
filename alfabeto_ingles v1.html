@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alfabeto Inglés - Repaso</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .app { max-width: 520px; width: 100%; background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+  h1 { font-size: 17px; font-weight: 500; color: #1a1a1a; margin-bottom: 1rem; }
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; float: right; margin-top: 2px; }
+  .badge-all { background: #dbeafe; color: #1e40af; }
+  .badge-weak { background: #fee2e2; color: #991b1b; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+  .stat { background: #f9f9f7; border-radius: 8px; padding: .75rem; text-align: center; }
+  .stat-n { font-size: 22px; font-weight: 500; }
+  .stat-l { font-size: 12px; color: #666; margin-top: 2px; }
+  .letter-box { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; height: 120px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; position: relative; cursor: pointer; }
+  .letter-box:hover { border-color: #ccc; }
+  .letter-big { font-size: 72px; font-weight: 500; color: #1a1a1a; }
+  .feedback { position: absolute; right: 20px; font-size: 36px; }
+  .speak-icon { position: absolute; right: 12px; top: 10px; font-size: 20px; color: #888; cursor: pointer; border: none; background: none; padding: 4px 8px; }
+  .speak-icon:hover { color: #333; }
+  .input-row { display: flex; gap: 10px; margin-bottom: .75rem; }
+  .input-row input { flex: 1; font-size: 28px; text-align: center; text-transform: uppercase; letter-spacing: 4px; border-radius: 8px; border: 1px solid #d1d5db; padding: 10px; outline: none; color: #1a1a1a; }
+  .input-row input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px #eff6ff; }
+  .btn { border: 1px solid #d1d5db; background: white; color: #1a1a1a; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { background: #f9f9f7; }
+  .btn-primary { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+  .btn-primary:hover { background: #1e40af; }
+  .btn-danger { background: #fef2f2; color: #991b1b; border-color: #fca5a5; }
+  .btn-danger:hover { background: #fee2e2; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .hint { font-size: 12px; color: #9ca3af; text-align: center; margin-bottom: 1rem; min-height: 16px; }
+  .panel { background: white; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1rem; }
+  .panel-title { font-size: 14px; font-weight: 500; color: #666; margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; }
+  .grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 15px; font-weight: 500; border: 1px solid; cursor: default; }
+  .chip-ok { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+  .chip-err { background: #fef2f2; color: #991b1b; border-color: #fca5a5; }
+  .chip-none { background: #f9f9f7; color: #6b7280; border-color: #e5e7eb; }
+  .alert { background: #fefce8; border: 1px solid #fde047; border-radius: 8px; padding: .75rem 1rem; font-size: 13px; color: #854d0e; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <h1>Alfabeto inglés</h1>
+    <span id="badge" class="badge badge-all">Todas las letras</span>
+  </div>
+
+  <div class="alert" id="alert-box" style="display:none">
+    ⚠️ Audio no disponible. Asegúrate de abrir este archivo en un navegador (Chrome o Edge recomendado).
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-n" id="stat-ok" style="color:#15803d">0</div><div class="stat-l">Aprendidas</div></div>
+    <div class="stat"><div class="stat-n" id="stat-err" style="color:#991b1b">0</div><div class="stat-l">Por repasar</div></div>
+    <div class="stat"><div class="stat-n" id="stat-streak">0</div><div class="stat-l">Racha</div></div>
+  </div>
+
+  <div class="letter-box" id="letter-box" onclick="repeatSpeak()">
+    <span class="letter-big" id="letter-shown" style="opacity:0">?</span>
+    <span class="feedback" id="feedback"></span>
+    <button class="speak-icon" onclick="event.stopPropagation();repeatSpeak()" title="Repetir">🔊</button>
+  </div>
+
+  <div class="input-row">
+    <input type="text" id="answer" maxlength="1" placeholder="?" autocomplete="off" autocorrect="off" spellcheck="false" />
+    <button class="btn btn-primary" onclick="check()">✓ Verificar</button>
+    <button class="btn" onclick="nextRound()">→</button>
+  </div>
+  <p class="hint" id="hint">Pulsa "Pronunciar" para comenzar</p>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="play-btn" onclick="startOrRepeat()">🔊 Pronunciar</button>
+    <button class="btn btn-danger" onclick="modeWeak()">↺ Repasar débiles</button>
+    <button class="btn" onclick="modeAll()">⊞ Todas</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <span>Progreso — 26 letras</span>
+      <button class="btn" style="padding:3px 10px;font-size:12px" onclick="toggleGrid()">Ocultar</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="panel" id="weak-panel" style="display:none;margin-top:.75rem">
+    <div class="panel-title" style="color:#991b1b">
+      <span>⚠ Letras para repasar</span>
+      <button class="btn" style="padding:3px 10px;font-size:12px" onclick="document.getElementById('weak-panel').style.display='none'">Cerrar</button>
+    </div>
+    <div class="grid" id="weak-grid"></div>
+  </div>
+</div>
+
+<script>
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const state = { current:null, mode:'all', learned:{}, wrong:{}, streak:0, revealed:false, gridOpen:true, started:false };
+ALPHA.forEach(l => { state.learned[l]=0; state.wrong[l]=0; });
+
+// --- SPEECH ---
+// Estrategia: intentar speechSynthesis primero; si falla o no hay voces, usar Google TTS via audio element
+let ttsAudio = null;
+
+function speakViaGoogleTTS(letter) {
+  // Google Translate TTS - funciona en Brave y cualquier navegador con internet
+  const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&tl=en-US&client=gtx&q=${encodeURIComponent(letter)}`;
+  if (!ttsAudio) {
+    ttsAudio = new Audio();
+    ttsAudio.onerror = () => {
+      document.getElementById('alert-box').style.display = 'block';
+    };
+  }
+  ttsAudio.src = url;
+  ttsAudio.play().catch(() => {
+    document.getElementById('alert-box').style.display = 'block';
+  });
+}
+
+function speakViaSynthesis(letter, onFail) {
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(v => v.lang === 'en-US' && v.localService) ||
+            voices.find(v => v.lang === 'en-US') ||
+            voices.find(v => v.lang.startsWith('en')) ||
+            (voices.length ? voices[0] : null);
+
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(letter);
+  utt.lang = 'en-US';
+  utt.rate = 0.85;
+  utt.volume = 1;
+  if (v) utt.voice = v;
+  utt.onerror = onFail;
+  // Si en 1.5s no arrancó, también fallback
+  const timeout = setTimeout(onFail, 1500);
+  utt.onstart = () => clearTimeout(timeout);
+  speechSynthesis.speak(utt);
+}
+
+let useFallback = false; // se activa si speechSynthesis falla
+
+function speak(letter) {
+  if (useFallback || !('speechSynthesis' in window)) {
+    speakViaGoogleTTS(letter);
+    return;
+  }
+  speakViaSynthesis(letter, () => {
+    useFallback = true;
+    speakViaGoogleTTS(letter);
+  });
+}
+
+// Precargar voces si están disponibles
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+// --- GAME ---
+function weighted() {
+  const pool = [];
+  ALPHA.forEach(l => {
+    const w = state.wrong[l] > 0 ? 1 + state.wrong[l] * 3 : 1;
+    for (let i=0;i<w;i++) pool.push(l);
+  });
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function weakLetters() {
+  return ALPHA.filter(l => state.wrong[l]>0).sort((a,b)=>state.wrong[b]-state.wrong[a]);
+}
+
+function pickNext() {
+  let letter;
+  if (state.mode === 'weak') {
+    const wl = weakLetters();
+    if (!wl.length) { modeAll(); return; }
+    const pool = [];
+    wl.forEach(l => { for (let i=0;i<1+state.wrong[l]*2;i++) pool.push(l); });
+    letter = pool[Math.floor(Math.random()*pool.length)];
+  } else {
+    letter = weighted();
+  }
+  state.current = letter;
+  state.revealed = false;
+  document.getElementById('letter-shown').style.opacity = '0';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('answer').value = '';
+  document.getElementById('hint').textContent = 'Escucha y escribe la letra';
+  document.getElementById('answer').focus();
+  setTimeout(() => speak(letter), 80);
+}
+
+function check() {
+  if (state.revealed) { nextRound(); return; }
+  const input = document.getElementById('answer').value.trim().toUpperCase();
+  if (!input || !ALPHA.includes(input)) {
+    document.getElementById('hint').textContent = 'Escribe una letra A-Z';
+    return;
+  }
+  state.revealed = true;
+  const correct = input === state.current;
+  document.getElementById('letter-shown').style.opacity = '1';
+  document.getElementById('feedback').textContent = correct ? '✅' : '❌';
+  if (correct) {
+    state.learned[state.current]++;
+    state.streak++;
+    document.getElementById('hint').textContent = `¡Correcto! Era "${state.current}". Pulsa → para continuar.`;
+  } else {
+    state.wrong[state.current]++;
+    state.streak = 0;
+    document.getElementById('hint').textContent = `Era "${state.current}" — ¡sigue practicando!`;
+  }
+  updateUI();
+}
+
+function nextRound() {
+  if (!state.started) { startOrRepeat(); return; }
+  if (!state.revealed) check();
+  else pickNext();
+}
+
+function startOrRepeat() {
+  state.started = true;
+  if (!state.current || state.revealed) pickNext();
+  else speak(state.current);
+}
+
+function repeatSpeak() {
+  if (state.current) speak(state.current);
+}
+
+function modeAll() {
+  state.mode = 'all';
+  document.getElementById('badge').className = 'badge badge-all';
+  document.getElementById('badge').textContent = 'Todas las letras';
+  pickNext();
+}
+
+function modeWeak() {
+  state.mode = 'weak';
+  document.getElementById('badge').className = 'badge badge-weak';
+  document.getElementById('badge').textContent = 'Modo: letras débiles';
+  document.getElementById('weak-panel').style.display = 'block';
+  updateUI();
+  pickNext();
+}
+
+function toggleGrid() {
+  state.gridOpen = !state.gridOpen;
+  document.getElementById('grid').style.display = state.gridOpen ? 'flex' : 'none';
+}
+
+function updateUI() {
+  const learnedC = ALPHA.filter(l => state.learned[l]>0 && state.wrong[l]===0).length;
+  document.getElementById('stat-ok').textContent = learnedC;
+  document.getElementById('stat-err').textContent = weakLetters().length;
+  document.getElementById('stat-streak').textContent = state.streak;
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  ALPHA.forEach(l => {
+    const d = document.createElement('div');
+    d.className = 'chip ' + (state.wrong[l]>0 ? 'chip-err' : state.learned[l]>0 ? 'chip-ok' : 'chip-none');
+    d.textContent = l;
+    d.title = state.wrong[l]>0 ? `Errores: ${state.wrong[l]}` : state.learned[l]>0 ? `Aciertos: ${state.learned[l]}` : 'Sin repasar';
+    grid.appendChild(d);
+  });
+
+  const wg = document.getElementById('weak-grid');
+  wg.innerHTML = '';
+  const wl = weakLetters();
+  if (!wl.length) {
+    wg.innerHTML = '<p style="font-size:13px;color:#666">¡Sin errores aún!</p>';
+  } else {
+    wl.forEach(l => {
+      const d = document.createElement('div');
+      d.className = 'chip chip-err';
+      d.textContent = l;
+      d.title = `Errores: ${state.wrong[l]}`;
+      wg.appendChild(d);
+    });
+  }
+}
+
+document.getElementById('answer').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { if (!state.revealed) check(); else nextRound(); }
+});
+
+updateUI();
+</script>
+</body>
+</html>
