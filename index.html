@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="EnglishLens — Estudio interactivo de inglés americano con análisis léxico por IA" />
+  <title>EnglishLens — Inglés Interactivo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Toast de notificaciones ── -->
+  <div id="notification" class="notification" role="alert" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ═══════════════════════════════════════
+       HEADER — Configuración y controles
+  ═══════════════════════════════════════ -->
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="brand-icon" aria-hidden="true">🔬</span>
+      <div class="brand-text">
+        <h1 class="brand-title">EnglishLens</h1>
+        <p class="brand-tagline">Análisis léxico interactivo · Inglés americano</p>
+      </div>
+    </div>
+
+    <div class="header-controls">
+
+      <!-- API Key -->
+      <div class="ctrl-group">
+        <label for="api-key-input" class="ctrl-label">OpenRouter API Key</label>
+        <div class="ctrl-row">
+          <input
+            type="password"
+            id="api-key-input"
+            class="field-input"
+            placeholder="sk-or-v1-…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Clave API de OpenRouter"
+          />
+          <button id="toggle-api-key" class="icon-btn" title="Mostrar / ocultar" aria-label="Alternar visibilidad de la clave API">👁</button>
+        </div>
+      </div>
+
+      <!-- Nivel CEFR -->
+      <div class="ctrl-group">
+        <label for="level-select" class="ctrl-label">Nivel CEFR</label>
+        <select id="level-select" class="field-select" aria-label="Nivel de inglés">
+          <option value="A1">A1 — Principiante</option>
+          <option value="A2">A2 — Elemental</option>
+          <option value="B1" selected>B1 — Intermedio</option>
+          <option value="B2">B2 — Intermedio Alto</option>
+          <option value="C1">C1 — Avanzado</option>
+          <option value="C2">C2 — Maestría</option>
+        </select>
+      </div>
+
+      <!-- Modelo IA -->
+      <div class="ctrl-group ctrl-group--wide">
+        <label for="model-select" class="ctrl-label">Modelo de IA (gratis)</label>
+        <div class="ctrl-row">
+          <select id="model-select" class="field-select" aria-label="Modelo de inteligencia artificial">
+            <option value="">— Haz clic en 🔄 para cargar modelos —</option>
+          </select>
+          <button id="refresh-models-btn" class="icon-btn" title="Actualizar lista de modelos gratuitos" aria-label="Actualizar modelos">🔄</button>
+        </div>
+      </div>
+
+    </div><!-- /header-controls -->
+  </header>
+
+  <!-- ═══════════════════════════════════════
+       MAIN — Entrada y salida
+  ═══════════════════════════════════════ -->
+  <main class="app-main" id="main-content">
+
+    <!-- ── Zona de entrada de texto ── -->
+    <section class="card input-card" aria-label="Entrada de texto">
+      <div class="card-header">
+        <span class="card-icon" aria-hidden="true">📝</span>
+        <div>
+          <h2 class="card-title">Texto a analizar</h2>
+          <p class="card-hint">Pega o escribe cualquier fragmento de inglés americano</p>
+        </div>
+      </div>
+
+      <textarea
+        id="text-input"
+        class="text-area"
+        rows="4"
+        placeholder='Ej: "She decided to look up the word before giving up on the essay entirely."'
+        aria-label="Texto en inglés para analizar"
+        spellcheck="false"
+      ></textarea>
+
+      <div class="input-footer">
+        <span id="char-count" class="char-count" aria-live="polite">0 caracteres</span>
+        <button id="analyze-btn" class="btn-primary" aria-label="Analizar texto con IA">
+          <span aria-hidden="true">🔍</span>&ensp;Analizar Texto
+        </button>
+      </div>
+    </section>
+
+    <!-- ── Leyenda de categorías gramaticales ── -->
+    <div class="legend" id="legend" hidden aria-label="Leyenda de categorías gramaticales">
+      <span class="legend-title">Categorías:</span>
+      <span class="legend-chip cat-verb">Verbos</span>
+      <span class="legend-chip cat-noun">Sustantivos</span>
+      <span class="legend-chip cat-adj">Adjetivos</span>
+      <span class="legend-chip cat-adv">Adverbios</span>
+      <span class="legend-chip cat-phrasal">Phrasal Verbs</span>
+      <span class="legend-chip cat-prep">Preposiciones</span>
+      <span class="legend-chip cat-conj">Conjunciones</span>
+      <span class="legend-chip cat-pron">Pronombres</span>
+      <span class="legend-chip cat-default">Artículos / Otros</span>
+    </div>
+
+    <!-- ── Texto analizado e interactivo ── -->
+    <section class="card output-card" aria-label="Texto analizado" aria-live="polite">
+      <div id="rendered-text" class="rendered-text" role="region" aria-label="Palabras interactivas">
+        <p class="placeholder-msg">
+          Aquí aparecerá el texto procesado. Cada palabra o expresión será
+          un elemento interactivo con color según su categoría gramatical.<br>
+          <span class="placeholder-sub">Haz clic en cualquier palabra para ver su análisis completo.</span>
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════
+       BOTÓN FLOTANTE — Diccionario
+  ═══════════════════════════════════════ -->
+  <button
+    id="dictionary-btn"
+    class="dict-fab"
+    aria-label="Abrir diccionario de repaso"
+    title="Diccionario de Repaso"
+  >
+    <span class="dict-fab-icon" aria-hidden="true">📚</span>
+    <span id="dict-count" class="dict-badge" aria-label="Palabras guardadas"></span>
+  </button>
+
+  <!-- ═══════════════════════════════════════
+       MODAL — Detalle de la palabra
+  ═══════════════════════════════════════ -->
+  <div
+    id="word-modal"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-word-title"
+    aria-hidden="true"
+  >
+    <div class="modal-box" role="document">
+
+      <!-- Encabezado con color de categoría -->
+      <div id="modal-head" class="modal-head">
+        <div class="modal-head-content">
+          <h2 id="modal-word-title" class="modal-word"></h2>
+          <span id="modal-cat-badge" class="modal-cat-badge"></span>
+        </div>
+        <button id="modal-close" class="close-btn" aria-label="Cerrar">✕</button>
+      </div>
+
+      <!-- Cuerpo scrolleable -->
+      <div class="modal-body">
+
+        <div class="detail-block">
+          <span class="detail-label">🇪🇸 Traducción al español</span>
+          <p id="modal-translation" class="detail-translation"></p>
+        </div>
+
+        <div class="detail-block">
+          <span class="detail-label">📖 Definición en inglés</span>
+          <p id="modal-definition" class="detail-text"></p>
+        </div>
+
+        <div class="detail-block">
+          <span class="detail-label">🔗 Sinónimos</span>
+          <div id="modal-synonyms" class="tag-row"></div>
+        </div>
+
+        <div class="detail-block">
+          <span class="detail-label">💬 Ejemplos de uso</span>
+          <ul id="modal-examples" class="example-list"></ul>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <div class="modal-foot">
+        <p class="modal-auto-note">✓ Guardado automáticamente en tu diccionario</p>
+        <button id="add-to-dict-btn" class="btn-secondary">
+          <span aria-hidden="true">📌</span>&ensp;Ver en Diccionario
+        </button>
+      </div>
+
+    </div><!-- /modal-box -->
+  </div><!-- /word-modal -->
+
+  <!-- ═══════════════════════════════════════
+       PANEL LATERAL — Diccionario de repaso
+  ═══════════════════════════════════════ -->
+  <div
+    id="dictionary-panel"
+    class="overlay panel-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Diccionario de repaso"
+    aria-hidden="true"
+  >
+    <div class="panel-box">
+
+      <div class="panel-head">
+        <h2 class="panel-title"><span aria-hidden="true">📚</span> Diccionario de Repaso</h2>
+        <button id="dictionary-close" class="close-btn" aria-label="Cerrar diccionario">✕</button>
+      </div>
+
+      <div class="panel-body">
+        <div id="dictionary-list" class="dict-list" role="list"></div>
+      </div>
+
+    </div><!-- /panel-box -->
+  </div><!-- /dictionary-panel -->
+
+  <script src="app.js"></script>
+</body>
+</html>
