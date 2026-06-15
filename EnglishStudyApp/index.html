@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Study App - OpenRouter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>📚 English Study App</h1>
+        <div class="api-key-section">
+            <label for="api-key">OpenRouter API Key:</label>
+            <input type="password" id="api-key" placeholder="sk-or-..." autocomplete="off">
+            <button id="save-api-key" title="Guardar API Key">💾</button>
+        </div>
+    </header>
+
+    <section class="controls">
+        <div class="control-group">
+            <label for="level">Nivel:</label>
+            <select id="level">
+                <option value="A1">A1 - Principiante</option>
+                <option value="A2">A2 - Básico</option>
+                <option value="B1">B1 - Intermedio</option>
+                <option value="B2">B2 - Intermedio Alto</option>
+                <option value="C1">C1 - Avanzado</option>
+                <option value="C2">C2 - Dominio</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="model">Modelo:</label>
+            <select id="model">
+                <option value="">-- Selecciona un modelo --</option>
+            </select>
+            <button id="fetch-models" title="Actualizar modelos gratuitos">🔄 Actualizar Modelos</button>
+        </div>
+    </section>
+
+    <section class="input-area">
+        <textarea id="text-input" placeholder="Pega o escribe tu texto en inglés aquí..." rows="6"></textarea>
+        <button id="analyze-btn" class="primary-btn">🔍 Analizar Texto</button>
+    </section>
+
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>Analizando texto con IA...</p>
+    </div>
+
+    <main id="text-container" class="text-container">
+        <p class="placeholder-text">El texto analizado aparecerá aquí. Haz clic en las palabras para ver detalles.</p>
+    </main>
+
+    <button id="dictionary-toggle" class="floating-btn" title="Diccionario de Repaso">📖</button>
+
+    <aside id="dictionary-panel" class="dictionary-panel hidden">
+        <div class="panel-header">
+            <h2>📖 Diccionario de Repaso</h2>
+            <button id="close-dictionary" class="close-btn">&times;</button>
+        </div>
+        <div id="dictionary-cards" class="dictionary-cards">
+            <p class="empty-message">No hay palabras guardadas aún. ¡Analiza un texto y agrega palabras!</p>
+        </div>
+    </aside>
+
+    <div id="word-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <div id="modal-body"></div>
+            <button id="add-to-dictionary" class="primary-btn">➕ Agregar al Diccionario</button>
+        </div>
+    </div>
+
+    <div id="panel-overlay" class="panel-overlay hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
