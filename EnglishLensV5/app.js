@@ -1205,23 +1205,27 @@ function playPronunciation() {
 
 function openModal(index) {
   const token = state.tokens[index];
-  if (!token) return;
+  if (!token) { console.error('[EL] openModal: no token at index', index); return; }
   state.activeToken = token;
 
-  // Auto-guardar en diccionario
-  addToDictionary(token);
+  try {
+    // Auto-guardar en diccionario
+    addToDictionary(token);
+  } catch(e) {
+    console.warn('[EL] addToDictionary failed (storage full?):', e.message);
+  }
 
-  // Poblar campos
-  dom.modalWordTitle.textContent   = token.texto_original;
-
-  // Pronunciación en paralelo
-  loadPronunciation(token.texto_original);
-  dom.modalCatBadge.textContent    = token.categoria || '';
-
-  renderModalSenses(token);
-
-  // Color del encabezado según categoría
-  dom.modalHead.className = `modal-head ${catClass(token.categoria)}`;
+  try {
+    // Poblar campos
+    dom.modalWordTitle.textContent = token.texto_original;
+    loadPronunciation(token.texto_original);
+    dom.modalCatBadge.textContent  = token.categoria || '';
+    renderModalSenses(token);
+    dom.modalHead.className = `modal-head ${catClass(token.categoria)}`;
+  } catch(e) {
+    console.error('[EL] openModal render error:', e);
+    dom.modalSenses.innerHTML = `<p class="sense-empty-msg">Error al mostrar: ${e.message}</p>`;
+  }
 
   dom.wordModal.classList.add('active');
   dom.wordModal.setAttribute('aria-hidden', 'false');
@@ -1355,7 +1359,18 @@ function addToDictionary(token) {
   const dict   = getDictionary();
   const exists = dict.some(t => t.texto_original === token.texto_original);
   if (!exists) {
-    dict.push(token);
+    // Guardar versión compacta: solo campos planos (sin senses[], que puede ser muy grande
+    // para localStorage). El modal ya obtiene los datos completos de state.tokens en tiempo real.
+    const compact = {
+      texto_original: token.texto_original,
+      tipo:           token.tipo        || 'single',
+      categoria:      token.categoria   || '',
+      traduccion:     token.traduccion  || '',
+      definicion_en:  token.definicion_en || '',
+      sinonimos:      Array.isArray(token.sinonimos) ? token.sinonimos.slice(0, 3) : [],
+      ejemplos:       Array.isArray(token.ejemplos)  ? token.ejemplos.slice(0, 2)  : [],
+    };
+    dict.push(compact);
     saveDictionary(dict);
     return true;
   }
