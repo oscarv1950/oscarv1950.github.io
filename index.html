@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexiDrop v1.0 - Videojuego Educativo JS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-area">
+        <!-- HUD: Marcador y Vidas -->
+        <div id="hud">
+            <div id="score-display">Score: 0</div>
+            <div id="lives-display">Lives: ❤️❤️❤️</div>
+        </div>
+
+        <!-- Etiqueta de categoría objetivo (flotante sobre la cesta) -->
+        <div id="category-label">NOUNS</div>
+
+        <!-- Cesta del jugador -->
+        <div id="basket"></div>
+
+        <!-- Mensaje de Game Over (oculto por defecto) -->
+        <div id="game-over-screen" class="hidden">
+            <h1>Game Over</h1>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button id="restart-btn">Reiniciar</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
