@@ -1238,9 +1238,10 @@ function openModal(index) {
 function renderModalSenses(token) {
   dom.modalSenses.innerHTML = '';
 
+  // Fallback: si el token no tiene senses (legacy o sin datos del diccionario)
   const senses = Array.isArray(token.senses) && token.senses.length
     ? token.senses
-    : [{
+    : token.sinDatos ? [] : [{
         categoria:     token.categoria     || '',
         traduccion:    token.traduccion    || '',
         definicion_en: token.definicion_en || '',
@@ -1248,83 +1249,83 @@ function renderModalSenses(token) {
         ejemplos:      token.ejemplos      || [],
       }];
 
-  if (token.sinDatos) {
-    const empty = document.createElement('p');
-    empty.className = 'sense-empty-msg';
-    empty.textContent = 'Esta palabra no se encontró en los diccionarios disponibles.';
-    dom.modalSenses.appendChild(empty);
+  if (!senses.length) {
+    const msg = document.createElement('p');
+    msg.className = 'sense-empty-msg';
+    msg.textContent = 'Esta palabra no se encontr\u00f3 en los diccionarios disponibles.';
+    dom.modalSenses.appendChild(msg);
     return;
   }
 
-  senses.forEach(sense => {
-    const card = document.createElement('div');
-    card.className = `sense-card ${catClass(sense.categoria)}`;
+  // ── Estilo diccionario impreso (tipo Kindle): sin tarjetas, jerarqu\u00eda tipogr\u00e1fica ──
+  const container = document.createElement('div');
+  container.className = 'dict-entry';
 
-    const header = document.createElement('div');
-    header.className = 'sense-card-head';
-    const catLabel = document.createElement('span');
-    catLabel.className = 'sense-cat-label';
-    catLabel.textContent = sense.categoria || '—';
-    header.appendChild(catLabel);
-    card.appendChild(header);
+  // Fonética (si existe en el token)
+  if (token.phonetic) {
+    const ph = document.createElement('span');
+    ph.className = 'dict-phonetic';
+    ph.textContent = token.phonetic;
+    container.appendChild(ph);
+  }
 
+  // Acepciones
+  senses.forEach((sense, idx) => {
+    const senseEl = document.createElement('div');
+    senseEl.className = 'dict-sense';
+
+    // Número de acepción + categoría gramatical abreviada
+    const senseHead = document.createElement('p');
+    senseHead.className = 'dict-sense-head';
+    const numEl = document.createElement('span');
+    numEl.className = 'dict-sense-num';
+    numEl.textContent = `${idx + 1}.`;
+    const catEl = document.createElement('em');
+    catEl.className = 'dict-pos';
+    catEl.textContent = sense.categoria || '';
+    senseHead.appendChild(numEl);
+    if (sense.categoria) { senseHead.appendChild(document.createTextNode('\u00a0')); senseHead.appendChild(catEl); }
+    senseEl.appendChild(senseHead);
+
+    // Traducción principal (negrita, prominente)
     if (sense.traduccion) {
-      const block = document.createElement('div');
-      block.className = 'detail-block';
-      block.innerHTML = '<span class="detail-label">🇪🇸 Traducción</span>';
-      const p = document.createElement('p');
-      p.className = 'detail-translation';
-      p.textContent = sense.traduccion;
-      block.appendChild(p);
-      card.appendChild(block);
+      const tr = document.createElement('p');
+      tr.className = 'dict-translation';
+      tr.textContent = sense.traduccion;
+      senseEl.appendChild(tr);
     }
 
+    // Definición en inglés (italic, más pequeña)
     if (sense.definicion_en) {
-      const block = document.createElement('div');
-      block.className = 'detail-block';
-      block.innerHTML = '<span class="detail-label">📖 Definición en inglés</span>';
-      const p = document.createElement('p');
-      p.className = 'detail-text';
-      p.textContent = sense.definicion_en;
-      block.appendChild(p);
-      card.appendChild(block);
+      const def = document.createElement('p');
+      def.className = 'dict-definition';
+      def.textContent = sense.definicion_en;
+      senseEl.appendChild(def);
     }
 
-    const syns = Array.isArray(sense.sinonimos) ? sense.sinonimos : [];
-    if (syns.length) {
-      const block = document.createElement('div');
-      block.className = 'detail-block';
-      block.innerHTML = '<span class="detail-label">🔗 Sinónimos</span>';
-      const row = document.createElement('div');
-      row.className = 'tag-row';
-      syns.forEach(s => {
-        const tag = document.createElement('span');
-        tag.className = 'syn-tag';
-        tag.textContent = s;
-        row.appendChild(tag);
-      });
-      block.appendChild(row);
-      card.appendChild(block);
-    }
-
+    // Ejemplos con bullet •
     const exs = Array.isArray(sense.ejemplos) ? sense.ejemplos : [];
     if (exs.length) {
-      const block = document.createElement('div');
-      block.className = 'detail-block';
-      block.innerHTML = '<span class="detail-label">💬 Ejemplos</span>';
-      const ul = document.createElement('ul');
-      ul.className = 'example-list';
+      const exList = document.createElement('ul');
+      exList.className = 'dict-examples';
       exs.forEach(ex => {
         const li = document.createElement('li');
         li.textContent = ex;
-        ul.appendChild(li);
+        exList.appendChild(li);
       });
-      block.appendChild(ul);
-      card.appendChild(block);
+      senseEl.appendChild(exList);
     }
 
-    dom.modalSenses.appendChild(card);
+    container.appendChild(senseEl);
   });
+
+  // Fuente del diccionario al pie (como el Kindle)
+  const source = document.createElement('p');
+  source.className = 'dict-source';
+  source.textContent = 'Oxford English\u2013Spanish Dictionary & New Oxford American Dictionary';
+  container.appendChild(source);
+
+  dom.modalSenses.appendChild(container);
 }
 
 function closeModal() {

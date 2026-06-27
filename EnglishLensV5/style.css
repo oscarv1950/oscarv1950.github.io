@@ -703,17 +703,15 @@ body[data-theme="dark"] .dict-header-btn:hover .dict-icon { color: #FCD34D; }
   justify-content: space-between;
   gap: var(--s4);
   padding: var(--s5) var(--s6);
-  transition: background 0.25s ease;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface);
 }
-.modal-head.cat-verb    { background: var(--c-verb-bg); }
-.modal-head.cat-noun    { background: var(--c-noun-bg); }
-.modal-head.cat-adj     { background: var(--c-adj-bg); }
-.modal-head.cat-adv     { background: var(--c-adv-bg); }
-.modal-head.cat-phrasal { background: var(--c-phrasal-bg); }
-.modal-head.cat-prep    { background: var(--c-prep-bg); }
-.modal-head.cat-conj    { background: var(--c-conj-bg); }
-.modal-head.cat-pron    { background: var(--c-pron-bg); }
-.modal-head.cat-default { background: var(--c-default-bg); }
+/* Mantener las clases para que openModal() no falle al asignarlas */
+.modal-head.cat-verb, .modal-head.cat-noun, .modal-head.cat-adj,
+.modal-head.cat-adv,  .modal-head.cat-phrasal, .modal-head.cat-prep,
+.modal-head.cat-conj, .modal-head.cat-pron, .modal-head.cat-default {
+  background: var(--surface);
+}
 
 .modal-head-content { display: flex; flex-direction: column; gap: var(--s1); min-width: 0; }
 
@@ -726,18 +724,12 @@ body[data-theme="dark"] .dict-header-btn:hover .dict-icon { color: #FCD34D; }
   word-break: break-word;
 }
 .modal-cat-badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: var(--rf);
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .9px;
-  background: rgba(0,0,0,.09);
-  color: var(--ink);
-  width: fit-content;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--ink-muted);
+  font-family: Georgia, 'Times New Roman', serif;
 }
-body[data-theme="dark"] .modal-cat-badge { background: rgba(255,255,255,.12); }
 
 /* Close button (shared) */
 .close-btn {
@@ -772,48 +764,106 @@ body[data-theme="dark"] .close-btn:hover  { background: rgba(255,255,255,.20); }
 .modal-body::-webkit-scrollbar { width: 4px; }
 .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-/* ── Senses container: una tarjeta por acepción gramatical ── */
-.senses-container {
+/* ── Entrada de diccionario — estilo impreso tipo Kindle ── */
+
+.dict-entry {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
+  gap: 0;
+  font-family: Georgia, 'Times New Roman', serif;
 }
 
-.sense-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  padding: var(--s4);
-  border-radius: var(--r2);
-  border: 1px solid var(--border-soft);
-  background: var(--surface-2);
-  border-left: 3px solid var(--ink-muted);
-}
-.sense-card.cat-verb    { border-left-color: var(--c-verb); }
-.sense-card.cat-noun    { border-left-color: var(--c-noun); }
-.sense-card.cat-adj     { border-left-color: var(--c-adj); }
-.sense-card.cat-adv     { border-left-color: var(--c-adv); }
-.sense-card.cat-phrasal { border-left-color: var(--c-phrasal); }
-.sense-card.cat-prep    { border-left-color: var(--c-prep); }
-.sense-card.cat-conj    { border-left-color: var(--c-conj); }
-.sense-card.cat-pron    { border-left-color: var(--c-pron); }
-
-.sense-card-head { display: flex; align-items: center; }
-.sense-cat-label {
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .9px;
+/* Fonética */
+.dict-phonetic {
+  display: block;
+  font-size: 14px;
   color: var(--ink-muted);
-  padding: 2px 9px;
-  border-radius: var(--rf);
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
+  letter-spacing: .3px;
+  margin-bottom: var(--s3);
 }
 
-.sense-card .detail-block:first-of-type { margin-top: 0; }
-.sense-card .detail-translation { font-size: 17px; }
+/* Cada acepción numerada */
+.dict-sense {
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--border-soft);
+}
+.dict-sense:first-of-type { border-top: none; padding-top: 0; }
 
+/* Número + categoría gramatical */
+.dict-sense-head {
+  margin: 0 0 var(--s1) 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.dict-sense-num {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink);
+  margin-right: 3px;
+}
+.dict-pos {
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+/* Traducción principal — lo más prominente */
+.dict-translation {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+  margin: 2px 0 var(--s2) 0;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+/* Definición en inglés — italic, un poco más pequeña */
+.dict-definition {
+  font-size: 13.5px;
+  font-style: italic;
+  color: var(--ink-muted);
+  line-height: 1.5;
+  margin: 0 0 var(--s2) 0;
+}
+
+/* Ejemplos con bullet • como en el diccionario impreso */
+.dict-examples {
+  list-style: none;
+  padding: 0;
+  margin: var(--s1) 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.dict-examples li {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.5;
+  padding-left: var(--s4);
+  position: relative;
+}
+.dict-examples li::before {
+  content: '\2022';
+  position: absolute;
+  left: 0;
+  color: var(--ink-muted);
+  font-style: normal;
+}
+
+/* Pie con la fuente del diccionario */
+.dict-source {
+  font-size: 11px;
+  color: var(--ink-muted);
+  text-align: right;
+  margin-top: var(--s4);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border-soft);
+  font-family: var(--font-sans);
+  font-style: normal;
+}
+
+/* Mensaje sin datos */
 .sense-empty-msg {
   font-size: 14px;
   color: var(--ink-muted);
@@ -822,6 +872,7 @@ body[data-theme="dark"] .close-btn:hover  { background: rgba(255,255,255,.20); }
   line-height: 1.6;
 }
 
+/* Mantener clases legacy por compatibilidad con export/import */
 .detail-block { display: flex; flex-direction: column; gap: var(--s1); }
 .detail-label {
   font-size: 10px;
