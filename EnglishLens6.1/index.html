@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="EnglishLens — Estudio interactivo de inglés americano con análisis léxico por IA" />
+  <title>EnglishLens — Inglés Interactivo</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- marked.js: renderizado de Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+</head>
+<body data-theme="light">
+
+  <!-- Toast de notificaciones -->
+  <div id="notification" class="notification" role="alert" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ════════════════════════════════════════
+       HEADER — dos filas: brand fija + controles colapsables
+  ════════════════════════════════════════ -->
+  <header class="app-header" id="app-header">
+    <div class="header-inner">
+
+    <!-- Fila 1: siempre visible -->
+    <div class="header-top">
+      <div class="header-brand">
+        <span class="brand-icon" aria-hidden="true">🔬</span>
+        <div class="brand-text">
+          <h1 class="brand-title">EnglishLens</h1>
+          <p class="brand-tagline">Análisis léxico interactivo · Inglés americano</p>
+        </div>
+      </div>
+
+      <div class="header-meta">
+        <!-- Diccionario de repaso -->
+        <button
+          id="dictionary-btn"
+          class="icon-btn dict-header-btn"
+          title="Diccionario de Repaso"
+          aria-label="Abrir diccionario de repaso"
+        >
+          <svg class="dict-icon" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round"
+               stroke-linejoin="round" width="17" height="17" aria-hidden="true">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+          <span id="dict-count" class="dict-header-badge" aria-label="Palabras guardadas"></span>
+        </button>
+
+        <!-- Historial de análisis -->
+        <button
+          id="history-btn"
+          class="icon-btn"
+          title="Historial de análisis"
+          aria-label="Abrir historial de análisis"
+        >
+          <span aria-hidden="true">🕘</span>
+          <span id="history-badge" class="history-badge" aria-label="Análisis guardados"></span>
+        </button>
+
+        <!-- Modo oscuro: SVG controlado por CSS según data-theme -->
+        <button
+          id="toggle-theme"
+          class="icon-btn theme-btn"
+          title="Cambiar a modo oscuro"
+          aria-label="Cambiar tema de color"
+        >
+          <!-- Luna — visible en modo claro -->
+          <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <!-- Sol — visible en modo oscuro -->
+          <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+
+        <!-- Colapsar/expandir controles -->
+        <button
+          id="toggle-header"
+          class="icon-btn"
+          title="Ocultar controles"
+          aria-label="Ocultar controles del encabezado"
+          aria-expanded="true"
+          aria-controls="header-controls"
+        >
+          <!-- Flecha ARRIBA por defecto (controles visibles).
+               .rotated gira 180° → flecha ABAJO (controles ocultos) -->
+          <svg class="chevron-icon" viewBox="0 0 16 10" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><path d="M1 9l7-7 7 7"/></svg>
+        </button>
+      </div>
+    </div><!-- /header-top -->
+
+    <!-- Fila 2: controles colapsables -->
+    <div class="header-controls" id="header-controls" role="region" aria-label="Configuración">
+
+      <!-- API Key -->
+      <div class="ctrl-group">
+        <label for="api-key-input" class="ctrl-label">API Key OpenRouter</label>
+        <div class="ctrl-row">
+          <input
+            type="password"
+            id="api-key-input"
+            class="field-input"
+            placeholder="sk-or-v1-…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Clave API de OpenRouter"
+          />
+          <button id="toggle-api-key" class="icon-btn" title="Mostrar / ocultar API Key" aria-label="Alternar visibilidad de la clave">👁</button>
+        </div>
+      </div>
+
+      <!-- Nivel CEFR -->
+      <div class="ctrl-group">
+        <label for="level-select" class="ctrl-label">Nivel CEFR</label>
+        <select id="level-select" class="field-select" aria-label="Nivel de inglés CEFR">
+          <option value="A1">A1 — Principiante</option>
+          <option value="A2">A2 — Elemental</option>
+          <option value="B1" selected>B1 — Intermedio</option>
+          <option value="B2">B2 — Interm. Alto</option>
+          <option value="C1">C1 — Avanzado</option>
+          <option value="C2">C2 — Maestría</option>
+        </select>
+      </div>
+
+      <!-- Modelo IA -->
+      <div class="ctrl-group ctrl-group--wide">
+        <label for="model-select" class="ctrl-label">Modelo IA (gratuito)</label>
+        <div class="ctrl-row">
+          <select id="model-select" class="field-select" aria-label="Modelo de inteligencia artificial">
+            <option value="">— Haz clic en 🔄 para cargar —</option>
+          </select>
+          <button id="refresh-models-btn" class="icon-btn" title="Actualizar modelos gratuitos" aria-label="Actualizar lista de modelos">🔄</button>
+        </div>
+      </div>
+
+    </div><!-- /header-controls -->
+    </div><!-- /header-inner -->
+  </header><!-- /app-header -->
+
+
+  <!-- ════════════════════════════════════════
+       MAIN
+  ════════════════════════════════════════ -->
+  <main class="app-main">
+
+    <!-- Zona de entrada -->
+    <section class="card input-card" aria-label="Entrada de texto">
+      <div class="card-header">
+        <span class="card-icon" aria-hidden="true">📝</span>
+        <div>
+          <h2 class="card-title">Texto a analizar</h2>
+          <p class="card-hint">Pega o escribe cualquier fragmento en inglés americano · <kbd>Ctrl</kbd>+<kbd>↵</kbd> para analizar</p>
+        </div>
+      </div>
+
+      <textarea
+        id="text-input"
+        class="text-area"
+        rows="4"
+        placeholder='Ej: "She decided to look up the word before giving up on the essay entirely."'
+        aria-label="Texto en inglés a analizar"
+        spellcheck="false"
+      ></textarea>
+
+      <div class="input-footer">
+        <span id="char-count" class="char-count" aria-live="polite">0 palabras</span>
+        <div class="input-footer-actions">
+          <button id="load-json-btn" class="btn-secondary" aria-label="Cargar análisis desde JSON">
+            <span aria-hidden="true">📋</span>&ensp;Cargar JSON
+          </button>
+          <button id="analyze-btn" class="btn-primary" aria-label="Analizar texto con IA">
+            <span aria-hidden="true">🔍</span>&ensp;Analizar Texto
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Leyenda / filtros de categoría -->
+    <div class="legend" id="legend" hidden role="group" aria-label="Filtros de categoría gramatical">
+      <span class="legend-title">Filtrar por categoría:</span>
+
+      <button class="legend-chip cat-verb"    data-cat="cat-verb"    type="button">Verbos</button>
+      <button class="legend-chip cat-noun"    data-cat="cat-noun"    type="button">Sustantivos</button>
+      <button class="legend-chip cat-adj"     data-cat="cat-adj"     type="button">Adjetivos</button>
+      <button class="legend-chip cat-adv"     data-cat="cat-adv"     type="button">Adverbios</button>
+      <button class="legend-chip cat-phrasal" data-cat="cat-phrasal" type="button">Phrasal Verbs</button>
+      <button class="legend-chip cat-prep"    data-cat="cat-prep"    type="button">Preposiciones</button>
+      <button class="legend-chip cat-conj"    data-cat="cat-conj"    type="button">Conjunciones</button>
+      <button class="legend-chip cat-pron"    data-cat="cat-pron"    type="button">Pronombres</button>
+      <button class="legend-chip cat-default" data-cat="cat-default" type="button">Artículos / Otros</button>
+    </div>
+
+    <!-- Texto analizado -->
+    <section class="card output-card" aria-label="Texto analizado">
+      <div id="rendered-text" class="rendered-text" role="region" aria-label="Palabras interactivas">
+        <p class="placeholder-msg">
+          El texto procesado aparecerá aquí. Cada palabra será interactiva.<br>
+          <span class="placeholder-sub">
+            Haz clic en una palabra para ver su análisis y resaltar todas sus repeticiones.
+            Usa los filtros de categoría para iluminar grupos gramaticales completos.
+          </span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ── Chat sobre el texto ── -->
+    <section class="card chat-card" id="chat-section" hidden aria-label="Chat sobre el texto analizado">
+      <div class="card-header">
+        <span class="card-icon" aria-hidden="true">💬</span>
+        <div>
+          <h2 class="card-title">Pregunta sobre el texto</h2>
+          <p class="card-hint">Consulta dudas al asistente de IA · Responde en español · <kbd>↵</kbd> para enviar</p>
+        </div>
+      </div>
+
+      <!-- Historial de mensajes -->
+      <div id="chat-history" class="chat-history" role="log" aria-live="polite" aria-label="Historial de chat"></div>
+
+      <!-- Fila de entrada -->
+      <div class="chat-input-row">
+        <input
+          type="text"
+          id="chat-input"
+          class="field-input"
+          placeholder="¿Qué significa &quot;give up&quot; aquí? ¿Cuál es el tono del texto?…"
+          aria-label="Escribe tu pregunta sobre el texto"
+          autocomplete="off"
+        />
+        <button id="chat-send-btn" class="btn-primary chat-send-btn" aria-label="Enviar pregunta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round" width="16" height="16"
+               aria-hidden="true">
+            <line x1="12" y1="19" x2="12" y2="5"/>
+            <polyline points="5 12 12 5 19 12"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- ════════════════════════════════════════
+       MODAL — Cargar JSON desde IA
+  ════════════════════════════════════════ -->
+  <div
+    id="json-loader-modal"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="jl-title"
+    aria-hidden="true"
+  >
+    <div class="modal-box jl-box">
+
+      <!-- Cabecera -->
+      <div class="modal-head jl-head">
+        <div class="jl-head-text">
+          <h2 class="modal-word" id="jl-title">Cargar análisis desde IA</h2>
+          <p class="jl-subtitle">Genera el JSON con tu IA favorita y pégalo aquí</p>
+        </div>
+        <button id="jl-close" class="close-btn" aria-label="Cerrar">✕</button>
+      </div>
+
+      <!-- Pestañas de pasos -->
+      <div class="jl-tabs" role="tablist">
+        <button class="jl-tab is-active" id="jl-tab-1" role="tab"
+                aria-selected="true"  aria-controls="jl-panel-1">
+          <span class="jl-tab-num">1</span> Obtener prompt
+        </button>
+        <button class="jl-tab" id="jl-tab-2" role="tab"
+                aria-selected="false" aria-controls="jl-panel-2">
+          <span class="jl-tab-num">2</span> Pegar JSON
+        </button>
+      </div>
+
+      <!-- ── Panel 1: Prompt ── -->
+      <div class="jl-panel" id="jl-panel-1" role="tabpanel" aria-labelledby="jl-tab-1">
+        <p class="jl-instructions">
+          Copia este prompt, pégalo en <strong>ChatGPT, Claude u otra IA</strong>
+          junto con tu texto en inglés y obtendrás el JSON listo para cargar.
+        </p>
+
+        <div class="jl-prompt-wrap">
+          <pre id="jl-prompt-box" class="jl-prompt-pre"></pre>
+          <button id="jl-copy-prompt" class="jl-copy-btn" title="Copiar prompt">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 width="15" height="15" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span id="jl-copy-label">Copiar prompt</span>
+          </button>
+        </div>
+
+        <div class="jl-panel-footer">
+          <button class="btn-primary jl-next-btn" id="jl-go-step2">
+            Tengo el JSON &ensp;→
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Panel 2: Pegar JSON ── -->
+      <div class="jl-panel jl-panel--hidden" id="jl-panel-2" role="tabpanel"
+           aria-labelledby="jl-tab-2">
+        <p class="jl-instructions">
+          Pega el JSON que generó la IA. También puedes cargar un
+          <strong>archivo .json</strong> exportado anteriormente.
+        </p>
+
+        <div class="jl-paste-wrap">
+          <textarea
+            id="jl-json-input"
+            class="jl-json-textarea"
+            placeholder='{"tokens": [{"texto_original": "hello", ...}]}'
+            spellcheck="false"
+            aria-label="JSON del análisis"
+          ></textarea>
+        </div>
+
+        <div class="jl-file-row">
+          <button id="jl-file-btn" class="btn-secondary jl-file-pick-btn">
+            📂&ensp;Cargar desde archivo .json
+          </button>
+          <input type="file" id="jl-file-input" accept=".json,application/json" hidden />
+          <span id="jl-file-name" class="jl-file-name"></span>
+        </div>
+
+        <div id="jl-error" class="jl-error jl-error--hidden"></div>
+
+        <div class="jl-panel-footer jl-panel-footer--between">
+          <button class="btn-secondary" id="jl-back-step1">← Volver</button>
+          <button class="btn-primary"   id="jl-load-btn">
+            ✓&ensp;Cargar análisis
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       MODAL — Detalle de palabra
+  ════════════════════════════════════════ -->
+  <div
+    id="word-modal"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-word-title"
+    aria-hidden="true"
+  >
+    <div class="modal-box">
+
+      <div id="modal-head" class="modal-head">
+        <div class="modal-head-content">
+          <div class="modal-word-row">
+            <h2 id="modal-word-title" class="modal-word"></h2>
+            <button id="modal-pronounce-btn" class="pronounce-btn" aria-label="Escuchar pronunciación" title="Escuchar pronunciación" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              </svg>
+            </button>
+            <span id="modal-phonetic" class="modal-phonetic"></span>
+          </div>
+          <span id="modal-cat-badge" class="modal-cat-badge"></span>
+        </div>
+        <button id="modal-close" class="close-btn" aria-label="Cerrar detalle">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="modal-senses" class="senses-container"></div>
+      </div>
+
+      <div class="modal-foot">
+        <p class="modal-auto-note">✓ Guardado automáticamente</p>
+        <button id="open-dict-btn" class="btn-secondary">
+          <span aria-hidden="true">📚</span>&ensp;Ver Diccionario
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════
+       PANEL LATERAL — Diccionario de repaso
+  ════════════════════════════════════════ -->
+  <div
+    id="dictionary-panel"
+    class="overlay panel-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Diccionario de repaso"
+    aria-hidden="true"
+  >
+    <div class="panel-box">
+      <div class="panel-head">
+        <h2 class="panel-title"><span aria-hidden="true">📚</span> Diccionario de Repaso</h2>
+        <button id="dictionary-close" class="close-btn" aria-label="Cerrar diccionario">✕</button>
+      </div>
+      <div class="dict-panel-actions">
+        <button id="dict-flashcard-btn" class="dict-flashcard-btn">
+          🃏 Repasar vocabulario
+        </button>
+        <div class="history-action-row">
+          <button id="dict-export-btn" class="btn-secondary" title="Descargar diccionario como archivo .json">
+            📥&ensp;Exportar
+          </button>
+          <button id="dict-import-btn" class="btn-secondary" title="Cargar diccionario desde un archivo .json">
+            📤&ensp;Importar
+          </button>
+          <input type="file" id="dict-import-file" accept=".json,application/json" hidden />
+        </div>
+        <button id="dict-clear-btn" class="history-clear-btn" title="Eliminar todas las palabras del diccionario">
+          🗑️&ensp;Vaciar diccionario
+        </button>
+      </div>
+      <div class="panel-body">
+        <div id="dictionary-list" class="dict-list" role="list"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════
+       PANEL LATERAL — Historial de análisis
+  ════════════════════════════════════════ -->
+  <div
+    id="history-panel"
+    class="overlay panel-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Historial de análisis"
+    aria-hidden="true"
+  >
+    <div class="panel-box">
+      <div class="panel-head">
+        <h2 class="panel-title"><span aria-hidden="true">🕘</span> Historial de Análisis</h2>
+        <button id="history-close" class="close-btn" aria-label="Cerrar historial">✕</button>
+      </div>
+
+      <div class="history-panel-actions">
+        <div class="ctrl-group">
+          <label for="history-limit-select" class="ctrl-label">Máximo de entradas guardadas</label>
+          <select id="history-limit-select" class="field-select" aria-label="Máximo de entradas en el historial">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+
+        <div class="history-action-row">
+          <button id="history-export-btn" class="btn-secondary" title="Descargar historial como archivo .json">
+            📥&ensp;Exportar
+          </button>
+          <button id="history-import-btn" class="btn-secondary" title="Cargar historial desde un archivo .json">
+            📤&ensp;Importar
+          </button>
+          <input type="file" id="history-import-file" accept=".json,application/json" hidden />
+        </div>
+
+        <button id="history-clear-btn" class="history-clear-btn" title="Eliminar todas las entradas del historial">
+          🗑️&ensp;Vaciar historial
+        </button>
+      </div>
+
+      <div class="panel-body">
+        <div id="history-list" class="dict-list" role="list"></div>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- ══════════════════════════════════════════
+       17. FLASHCARDS OVERLAY
+       ══════════════════════════════════════════ -->
+  <div id="flashcard-overlay"
+       class="overlay fc-overlay"
+       role="dialog"
+       aria-modal="true"
+       aria-label="Modo repaso"
+       aria-hidden="true">
+
+    <div class="fc-shell">
+
+      <!-- Cabecera -->
+      <div class="fc-header">
+        <span class="fc-title">🃏 Modo repaso</span>
+        <div class="fc-meta">
+          <span id="fc-counter" class="fc-counter">1 / 1</span>
+          <button id="fc-close" class="icon-btn" title="Cerrar repaso" aria-label="Cerrar repaso">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra de progreso -->
+      <div class="fc-progress-track"
+           role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+           id="fc-progress-track">
+        <div id="fc-progress-bar" class="fc-progress-bar"></div>
+      </div>
+
+      <!-- Tarjeta 3D -->
+      <div id="fc-card" class="fc-card" tabindex="0"
+           aria-label="Tarjeta — pulsa Space para voltear">
+        <div class="fc-card-inner" id="fc-card-inner">
+
+          <!-- FRENTE -->
+          <div class="fc-face fc-front">
+            <span id="fc-cat-badge" class="fc-cat-badge cat-default">palabra</span>
+            <p id="fc-word" class="fc-word">word</p>
+            <p class="fc-hint">Pulsa <kbd>Space</kbd> o haz clic para ver la respuesta</p>
+          </div>
+
+          <!-- REVERSO -->
+          <div class="fc-face fc-back">
+            <p id="fc-translation" class="fc-translation">traducción</p>
+            <p id="fc-definition" class="fc-definition"></p>
+            <p id="fc-example"    class="fc-example"></p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Botones de evaluación -->
+      <div id="fc-actions" class="fc-actions fc-actions--hidden">
+        <button id="fc-wrong" class="fc-btn fc-btn--wrong" title="No la aprendí (←)">
+          <span class="fc-btn-icon">✗</span>
+          <span class="fc-btn-label">No aprendida</span>
+        </button>
+        <button id="fc-flip-btn" class="fc-btn fc-btn--flip" title="Voltear (Space)">
+          ↩ Voltear
+        </button>
+        <button id="fc-right" class="fc-btn fc-btn--right" title="¡La aprendí! (→)">
+          <span class="fc-btn-icon">✓</span>
+          <span class="fc-btn-label">¡Aprendida!</span>
+        </button>
+      </div>
+
+      <!-- Resultados (ocultos hasta el final) -->
+      <div id="fc-results" class="fc-results fc-results--hidden">
+        <p class="fc-results-emoji" id="fc-results-emoji">🎉</p>
+        <p class="fc-results-title">¡Repaso completado!</p>
+        <p class="fc-results-score" id="fc-results-score">Aprendidas: <strong>0 / 0</strong></p>
+        <div class="fc-results-actions">
+          <button id="fc-restart-wrong" class="btn-secondary">Repasar fallidas</button>
+          <button id="fc-restart-all"   class="btn-primary">Repasar todas</button>
+        </div>
+      </div>
+
+    </div><!-- /.fc-shell -->
+  </div><!-- /#flashcard-overlay -->
+
+  <script src="app.js"></script>
+</body>
+</html>
