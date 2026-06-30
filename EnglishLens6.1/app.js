@@ -908,6 +908,60 @@ function buildToken(texto_original, tipo, data) {
   };
 }
 
+/** analyzeText(): tokeniza usando el diccionario local cargado en memoria,
+ * sin llamar a ninguna API de IA. Carga los diccionarios bajo demanda si aún
+ * no están listos (primera vez que el usuario analiza texto en la sesión). */
+async function analyzeText() {
+  const text = dom.textInput.value.trim();
+
+  if (!text) { notify('Escribe o pega un texto en inglés para analizar.', 'error'); return; }
+  if (text.length > 8000) {
+    notify('El texto es demasiado largo (máx. 8 000 caracteres).', 'warning');
+    return;
+  }
+
+  dom.analyzeBtn.disabled  = true;
+  dom.analyzeBtn.innerHTML = '<span aria-hidden="true">⏳</span>&ensp;Analizando…';
+  dom.legend.hidden = true;
+  resetHighlightState();
+
+  if (!dictionariesReady()) {
+    dom.renderedText.innerHTML =
+      '<div class="loading">📚 Cargando diccionario (solo la primera vez)…</div>';
+  } else {
+    dom.renderedText.innerHTML = '<div class="loading">🔍 Analizando…</div>';
+  }
+
+  try {
+    await loadDictionaries();
+
+    const tokens = tokenizeText(text);
+    if (!tokens.length) throw new Error('No se pudo tokenizar el texto.');
+
+    state.tokens = tokens;
+    renderTokens(tokens, text);
+    dom.legend.hidden = false;
+    addHistoryEntry({ text, level: dom.levelSelect.value, model: 'diccionario-local', tokens });
+
+    // Mostrar chat y limpiar historial del texto anterior
+    dom.chatSection.hidden    = false;
+    dom.chatHistory.innerHTML = '';
+    chatHistory               = [];
+    dom.chatInput.value       = '';
+    dom.chatSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  } catch (err) {
+    console.error('[EL] analyzeText:', err);
+    dom.renderedText.innerHTML =
+      `<div class="error-msg">⚠️ ${escHtml(err.message)}<br>
+       <small>Revisa tu conexión a internet (el diccionario debe poder descargarse).</small></div>`;
+    notify(`Error: ${err.message}`, 'error');
+  } finally {
+    dom.analyzeBtn.disabled  = false;
+    dom.analyzeBtn.innerHTML = '<span aria-hidden="true">🔍</span>&ensp;Analizar Texto';
+  }
+}
+
 
 /* ═══════════════════════════════════════════════════
    10. TOKENS — renderizado
